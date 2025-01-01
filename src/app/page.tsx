@@ -84,6 +84,7 @@ export default function Home() {
     setTotalScore(0);
     setTurnScore(0);
     setCanPlay(false);
+    setKeepRolling(false);
   }
 
   function setAllDiceToFive() {
