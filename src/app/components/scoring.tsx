@@ -4,7 +4,29 @@ import { DiceValue } from "../page";
 import React from "react";
 
 const calcScore = (diceValue: DiceValue[]) => {
+  //counts how many of each die value there are
+  const counts = new Array(7).fill(0);
+  console.log("🚀 ~ calcScore ~ counts:", counts);
+  //creates a new array based on the value of each die
+  const values = diceValue.map((d) => d.value);
+  console.log("🚀 ~ calcScore ~ values:", values);
+  values.forEach((v) => counts[v]++);
+
   let score = 0;
+
+  // check for a straight
+  if (values.length === 6 && counts.slice(1).every((c) => c === 1)) {
+    return 1500;
+  }
+
+  // check for three pairs
+  if (
+    values.length === 6 &&
+    counts.slice(1).filter((c) => c === 2).length === 3
+  ) {
+    return 1500;
+  }
+
   diceValue.forEach((die) => {
     if (die.value === 1) {
       score += 100;
@@ -27,7 +49,9 @@ export default function useGameScoring(
   setFarkle: React.Dispatch<React.SetStateAction<boolean>>,
   rollDice: () => void,
   keepRolling: boolean,
-  setKeepRolling: React.Dispatch<React.SetStateAction<boolean>>
+  setKeepRolling: React.Dispatch<React.SetStateAction<boolean>>,
+  canPlay: boolean,
+  setCanPlay: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const numPrevDiceHeld = React.useRef(0);
 
@@ -96,6 +120,8 @@ export default function useGameScoring(
     console.log("🚀 ~ useEffect ~ keepRolling:", keepRolling);
     // Always update this, at the end of all of this logic.
     //! IF YOU RETURN BEFORE CALLING THIS IT WILL BREAK
+    if (turnScore >= 500 && !canPlay) return setCanPlay(true);
+
     numPrevDiceHeld.current = numDiceHeld;
   }, [diceValue]);
 }

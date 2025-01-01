@@ -6,11 +6,16 @@ import useGameScoring from "./components/scoring";
 import Image from "next/image";
 
 //what you need to do.
-// assign points to each die value
-// assign combinations of dice to points
-// keep track of score
-// not allow a player to play until they reach a score of 500
-// make the live dice and held dice separate arrays so that the possible score is only calculated on the live dice....this will help for when the possible score = 0 and there has to be a new turn
+//finish different scoring options...you still need:
+//  3 or more of a kind,
+//  two triplets,
+//  and four of a kind and a pair
+
+//there will be more bugs...thats alright...you can face that when you get there...but try to finish up the scoring first
+
+//try and stay focused on one task at a time...
+
+//finally make it look a little purdy
 
 //MAKE MORE COMPONENTS...CLEAN THIS SHIT UP
 
@@ -55,7 +60,9 @@ export default function Home() {
     setFarkle,
     rollDice,
     keepRolling,
-    setKeepRolling
+    setKeepRolling,
+    canPlay,
+    setCanPlay
   );
 
   function rollDice() {
@@ -65,7 +72,6 @@ export default function Home() {
   }
 
   //you can not play until you reach a score of 500, after that score is reached you can start adding the turn score to the total score
-  if (turnScore === 500 && !canPlay) return setCanPlay(true);
 
   function holdDie(id: string) {
     setDiceValue((oldDice) =>
@@ -90,6 +96,26 @@ export default function Home() {
   function setAllDiceToFive() {
     setDiceValue((oldDice) =>
       oldDice.map((prevValue) => ({ ...prevValue, value: 5 }))
+    );
+  }
+
+  function setDiceToStraight() {
+    const straightValues = [1, 2, 3, 4, 5, 6];
+    setDiceValue((oldDice) =>
+      oldDice.map((prevValue, index) => ({
+        ...prevValue,
+        value: straightValues[index % straightValues.length],
+      }))
+    );
+  }
+
+  function setDiceToThreePairs() {
+    const threePairsValues = [1, 1, 2, 2, 3, 3];
+    setDiceValue((oldDice) =>
+      oldDice.map((prevValue, index) => ({
+        ...prevValue,
+        value: threePairsValues[index % threePairsValues.length],
+      }))
     );
   }
 
@@ -130,6 +156,7 @@ export default function Home() {
 
   return (
     <div>
+      {possibleRollScore >= 500 && <div>NICE ROLL! You can now play!</div>}
       <div className="flex flex-col justify-center">
         <h1 className="text-center mt-10">FARKLE!</h1>
         <button
@@ -143,6 +170,18 @@ export default function Home() {
           className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
         >
           Set All Dice to 5
+        </button>
+        <button
+          onClick={setDiceToStraight}
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
+        >
+          Set Dice to Straight
+        </button>
+        <button
+          onClick={setDiceToThreePairs}
+          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
+        >
+          Set Dice to Three Pairs
         </button>
       </div>
       {!gameStarted && (
@@ -171,7 +210,7 @@ export default function Home() {
             <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
               {diceElements}
             </div>
-            {!farkle && (
+            {!farkle && diceValue.some((die) => die.held) && (
               <button
                 onClick={rollDice}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10"
@@ -179,12 +218,25 @@ export default function Home() {
                 Roll Dice
               </button>
             )}
-            <button
-              onClick={endTurn}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10 ml-5"
-            >
-              End Turn
-            </button>
+            {diceValue.some((die) => die.held) && !farkle && canPlay && (
+              <button
+                onClick={endTurn}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10 ml-5"
+              >
+                End Turn
+              </button>
+            )}
+            {diceValue.some((die) => die.held) && farkle && (
+              <div>
+                FARKLE!
+                <button
+                  onClick={newGame}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
+                >
+                  New Game
+                </button>
+              </div>
+            )}
             <div>held dice:</div>
             <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
               {heldDiceElements}
