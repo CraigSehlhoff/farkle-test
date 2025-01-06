@@ -6,62 +6,74 @@ import React from "react";
 const calcScore = (diceValue: DiceValue[]) => {
   //counts how many of each die value there are
   const counts = new Array(7).fill(0);
-
+  console.log("🚀 ~ calcScore ~ counts:", counts);
   //creates a new array based on the value of each die
   const values = diceValue.map((d) => d.value);
-
+  console.log("🚀 ~ calcScore ~ values:", values);
   values.forEach((v) => counts[v]++);
 
   let score = 0;
+  let onesCount = counts[1];
+  let fivesCount = counts[5];
 
+  // Check for other combinations first
   if (values.length === 6 && counts.slice(1).every((c) => c === 1)) {
-    return 1500; // Straight
-  }
-  if (
+    score += 1500;
+    if (values.includes(1)) onesCount -= 1;
+    if (values.includes(5)) fivesCount -= 1; // Straight
+    console.log("🚀 ~ calcScore ~ values:", values[0]);
+  } else if (
     values.length === 6 &&
     counts.slice(1).filter((c) => c === 2).length === 3
   ) {
-    return 1500; // Three pairs
-  }
-  if (
+    score += 1500; // Three pairs
+    if (values.includes(1)) onesCount -= 2;
+    if (values.includes(5)) fivesCount -= 2;
+  } else if (
     values.length === 6 &&
     counts.slice(1).filter((c) => c === 3).length === 2
   ) {
-    return 2500; // Two triplets
-  }
-  if (
+    score += 2500; // Two triplets
+    if (values.includes(1)) onesCount -= 3;
+    if (values.includes(5)) fivesCount -= 3;
+  } else if (
     values.length === 6 &&
     counts.slice(1).filter((c) => c === 4).length === 1 &&
     counts.slice(1).filter((c) => c === 2).length === 1
   ) {
-    return 1500; // Four of a kind and a pair
-  }
-  if (values.length >= 3 && counts.slice(1).some((c) => c >= 3)) {
+    score += 1500; // Four of a kind and a pair
+    if (values.filter((v) => v === 1).length === 4) onesCount -= 4;
+    if (values.filter((v) => v === 5).length === 4) fivesCount -= 4;
+    if (values.filter((v) => v === 1).length === 2) onesCount -= 2;
+    if (values.filter((v) => v === 5).length === 2) fivesCount -= 2;
+  } else if (values.length >= 3 && counts.slice(1).some((c) => c >= 3)) {
     if (counts.slice(1).filter((c) => c === 3).length === 1) {
-      return values[0] === 1 ? 300 : values[0] * 100; // Three of a kind
-    }
-    if (counts.slice(1).filter((c) => c === 4).length === 1) {
-      return 1000; // Four of a kind
-    }
-    if (counts.slice(1).filter((c) => c === 5).length === 1) {
-      return 2000; // Five of a kind
-    }
-    if (counts.slice(1).filter((c) => c === 6).length === 1) {
-      return 3000; // Six of a kind
+      const threeOfAKindValue = values.find((v) => counts[v] === 3);
+      if (threeOfAKindValue !== undefined) score += threeOfAKindValue * 100; // Three of a kind
+      if (values.filter((v) => v === 1).length === 3) onesCount -= 3;
+      if (values.filter((v) => v === 5).length === 3) fivesCount -= 3;
+    } else if (counts.slice(1).filter((c) => c === 4).length === 1) {
+      score += 1000; // Four of a kind
+      if (values.filter((v) => v === 1).length === 4) onesCount -= 4;
+      if (values.filter((v) => v === 5).length === 4) fivesCount -= 4;
+    } else if (counts.slice(1).filter((c) => c === 5).length === 1) {
+      score += 2000; // Five of a kind
+      if (values.filter((v) => v === 1).length === 5) onesCount -= 5;
+      if (values.filter((v) => v === 5).length === 5) fivesCount -= 5;
+    } else if (counts.slice(1).filter((c) => c === 6).length === 1) {
+      score += 3000; // Six of a kind
+      if (values.filter((v) => v === 1).length === 6) onesCount -= 6;
+      if (values.filter((v) => v === 5).length === 6) fivesCount -= 6;
     }
   }
-  //you are having an issue with the 3+ of a kind...they are adding to the held dice...for example if you have 3 1s held and then roll another 1 and hold it it is adding 1000 to the score...this is wrong...maybe create a new state for the newly held die so they dont combine?  you can make this reset when the dice are rolled again and then combine the held dice with the newly held dice (if this wouldnt cause the same issue)
 
-  // Add scores for individual dice values (1s and 5s)
-  diceValue.forEach((die) => {
-    if (die.value === 1) {
-      score += 100;
-    }
-    if (die.value === 5) {
-      score += 50;
-    }
-  });
+  // Add scores for individual dice values (1s and 5s) that are not part of any combination
+  score += onesCount * 100;
+  console.log("🚀 ~ calcScore ~ onesCount:", onesCount);
+  score += fivesCount * 50;
+  console.log("🚀 ~ calcScore ~ fivesCount:", fivesCount);
 
+  console.log("🚀 ~ calcScore ~ score:", score);
   return score;
 };
 
@@ -116,25 +128,28 @@ export default function useGameScoring(
       if (numDiceHeld === 6) {
         setTurnScore(newTurnScore);
         setRoundScore(keepRolling ? turnScore : newTurnScore);
-        // setDiceValue((oldDice) =>
-        //   oldDice.map((prevValue) => ({ ...prevValue, held: false }))
-        // );
+        setDiceValue((oldDice) =>
+          oldDice.map((prevValue) => ({ ...prevValue, held: false }))
+        );
         setFarkle(false);
-        // rollDice();
+        rollDice();
         setKeepRolling(true);
         console.log("new turnscore if 6 held die:", newTurnScore);
       }
     }
-    //what is a farkle...it is when you roll and do not have any new scoring die
-    // if (
-    //   newPossibleRollScore === 0 &&
-    //   possibleRollScore === 0 &&
-    //   turnScore !== 0
-    // ) {
-    //   setFarkle(true);
-    //   console.log("Farkle!");
-    // }
-    // console.log("🚀 ~ useEffect ~ possibleRollScore:", possibleRollScore);
+
+    if (
+      newPossibleRollScore === 0 &&
+      possibleRollScore === 0 &&
+      turnScore !== 0 &&
+      diceValue.some(
+        (die) =>
+          (!die.held && die.value !== 1) || (!die.held && die.value !== 5)
+      )
+    ) {
+      setFarkle(true);
+      console.log("Farkle!");
+    }
 
     // console.log("🚀 ~ numPrevDiceHeld:", numPrevDiceHeld);
     // console.log("🚀 ~ useEffect ~ newPossibleRollScore:", newPossibleRollScore);

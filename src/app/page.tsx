@@ -1,15 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { diceImages, Dice } from "./components/dice";
 import { nanoid } from "nanoid";
 import useGameScoring from "./components/scoring";
 import Image from "next/image";
+import TestingButtons from "./components/testingbuttons";
 
 //what you need to do.
-//finish different scoring options...you still need:
-//  3 or more of a kind,
-//  two triplets,
-//  and four of a kind and a pair
 
 //there will be more bugs...thats alright...you can face that when you get there...but try to finish up the scoring first
 
@@ -69,6 +66,9 @@ export default function Home() {
     setDiceValue((oldDice) =>
       oldDice.map((prevValue) => (prevValue.held ? { ...prevValue } : newDie()))
     );
+    if (diceValue.every((die) => die.held === true)) {
+      setDiceValue(allNewDice());
+    }
   }
 
   //you can not play until you reach a score of 500, after that score is reached you can start adding the turn score to the total score
@@ -91,32 +91,6 @@ export default function Home() {
     setTurnScore(0);
     setCanPlay(false);
     setKeepRolling(false);
-  }
-
-  function setAllDiceToFive() {
-    setDiceValue((oldDice) =>
-      oldDice.map((prevValue) => ({ ...prevValue, value: 5 }))
-    );
-  }
-
-  function setDiceToStraight() {
-    const straightValues = [1, 2, 3, 4, 5, 6];
-    setDiceValue((oldDice) =>
-      oldDice.map((prevValue, index) => ({
-        ...prevValue,
-        value: straightValues[index % straightValues.length],
-      }))
-    );
-  }
-
-  function setDiceToThreePairs() {
-    const threePairsValues = [1, 1, 2, 2, 3, 3];
-    setDiceValue((oldDice) =>
-      oldDice.map((prevValue, index) => ({
-        ...prevValue,
-        value: threePairsValues[index % threePairsValues.length],
-      }))
-    );
   }
 
   const diceElements = diceValue.map(
@@ -154,6 +128,7 @@ export default function Home() {
     setKeepRolling(false);
   }
 
+  console.log("🚀 ~ Home ~ possibleRollScore:", possibleRollScore);
   return (
     <div>
       {possibleRollScore >= 500 && <div>NICE ROLL! You can now play!</div>}
@@ -165,24 +140,7 @@ export default function Home() {
         >
           New Game
         </button>
-        <button
-          onClick={setAllDiceToFive}
-          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
-        >
-          Set All Dice to 5
-        </button>
-        <button
-          onClick={setDiceToStraight}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
-        >
-          Set Dice to Straight
-        </button>
-        <button
-          onClick={setDiceToThreePairs}
-          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
-        >
-          Set Dice to Three Pairs
-        </button>
+        <TestingButtons setDiceValue={setDiceValue} />
       </div>
       {!gameStarted && (
         <div className="flex justify-center flex-wrap">
@@ -205,43 +163,47 @@ export default function Home() {
             <div>Score this turn:{turnScore}</div>
             <div>Total Score:{totalScore}</div>
           </div>
-          <div className="mt-10 text-center">
-            live dice:
-            <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
-              {diceElements}
-            </div>
-            {!farkle && diceValue.some((die) => die.held) && (
-              <button
-                onClick={rollDice}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10"
-              >
-                Roll Dice
-              </button>
-            )}
-            {diceValue.some((die) => die.held) && !farkle && canPlay && (
-              <button
-                onClick={endTurn}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10 ml-5"
-              >
-                End Turn
-              </button>
-            )}
-            {diceValue.some((die) => die.held) && farkle && (
-              <div>
-                FARKLE!
-                <button
-                  onClick={newGame}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
-                >
-                  New Game
-                </button>
+          {totalScore <= 10000 ? (
+            <div className="mt-10 text-center">
+              live dice:
+              <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
+                {diceElements}
               </div>
-            )}
-            <div>held dice:</div>
-            <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
-              {heldDiceElements}
+              {!farkle && diceValue.some((die) => die.held) && (
+                <button
+                  onClick={rollDice}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10"
+                >
+                  Roll Dice
+                </button>
+              )}
+              {diceValue.some((die) => die.held) && !farkle && canPlay && (
+                <button
+                  onClick={endTurn}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-10 ml-5"
+                >
+                  End Turn
+                </button>
+              )}
+              {diceValue.some((die) => die.held) && farkle && (
+                <div>
+                  FARKLE!
+                  <button
+                    onClick={newGame}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-auto mr-auto mt-10"
+                  >
+                    New Game
+                  </button>
+                </div>
+              )}
+              <div>held dice:</div>
+              <div className="flex justify-center gap-2 flex-wrap w-3/4 ml-auto mr-auto">
+                {heldDiceElements}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>You Win!!! Your score is {totalScore}!!!</div>
+          )}
         </div>
       )}
     </div>
